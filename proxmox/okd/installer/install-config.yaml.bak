@@ -1,0 +1,29 @@
+apiVersion: v1
+baseDomain: thelab.lan
+compute:
+- architecture: amd64
+  hyperthreading: Enabled
+  name: worker
+  replicas: 0
+controlPlane:
+  architecture: amd64
+  hyperthreading: Enabled
+  name: master
+  replicas: 1
+metadata:
+  name: okd-sno
+networking:
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  machineNetwork:
+  - cidr: 192.168.2.0/24
+  networkType: OVNKubernetes
+  serviceNetwork:
+  - 172.30.0.0/16
+platform:
+  none: {}
+pullSecret: '{"auths":{"fake":{"auth":"aGVsbG86d29ybGQ="}}}'
+sshKey: 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDdB9h4dKGygEToyNxfBMutqDBXIdZuhXbBBdIpSK1JvPB5SslE0aVyP5xBqpL/7jQkRmzKExX1fbRBlSkx63KiWuGW5xYWDrqmS0gBcD+nSL6TCdIJZNE52n9P1UxOBwTyMPnV1+OoV+otQ5ork8hHa6faIxI/7Hs/8270BAWM0SyRJ3Mq1K4C1RjhLS9GqA+LSd6gOjhq6xt7VH0NeRZbUQfJhmEFA1yQhJKapK/+pYsHLaBLXgpqFZrP3bOcdGyQLJhTkPpSifcJTIbOk2+RGwsOMSyN62tjSNyont10y3C83voyTpFrc5+yU0PnqHD9MPgy5GNsc9kpxHBxwF1E7ToCYz2/p6YOpoP/qCADFTLyb2ci+YBvbcqZLpoFbfWvpHeC2HxpzWJP6gS9ZzMydArVZMx5YCsDI8BEYplEgaDx+AtBRpfvcmYpMCtnCdOtPUxrqRMT58CzTnwRSKy3ZD6w/jSHwa9oUenuFVR0fomHfXPMTVVAzggbNM2UATSNej4Uk5dnbUNFXFF9HS2ml0RjnB5SQbVz0Sr4TGslayQfGdWdXrnIRw3sznx/SlHjqp642o+l09eNStyHfQzRCVqYJBsbeWeERRcicSW5dqd6zgpNa52i9oZM6v0iAVPAz/0yICg8d9XEYh1SbE6VqkKPuei2rAM4QPkhOff4JQ== okd@thelab.lan'
+bootstrapInPlace:
+  installationDisk: /dev/sda

@@ -1,0 +1,23 @@
+apiVersion: v1
+baseDomain: okd.local
+metadata:
+  name: okd-420
+compute:
+- name: worker
+  replicas: 0
+controlPlane:
+  name: master
+  replicas: 1
+networking:
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  serviceNetwork:
+  - 172.30.0.0/16
+  networkType: OVNKubernetes
+platform:
+  none: {}
+bootstrapInPlace:
+  installationDisk: /dev/sda
+pullSecret: '{"auths":{"fake":{"auth":"aWQ6cGFzcwo="}}}'
+sshKey: 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCfblxgNqtAvO8BkodK2NjoOOCyxUnpSacqe7VZZDqyxur3/mo9TEVFVOKCjtOPHuJEFCbkgzXW/eVq3zet99C8IYoU/7y5zBFEqbxhVWkjZGQwuZEMF/VG6ezbrRb81dL4ac/M7w5ZQktDak1WIG6+o+je4kM8XpahtvCMb/ugz11/zEI01NJByWEq1ZqMlYTIYGyH3H/l5NHYHea91SzDEBSdE0wEOI9TotgAFJFr6+G1WKgbMC0MNq6mZuPlOYkayTSRf/NeYzPBjn1vIvJglut2MwUNa8qjU6rGSvREf6CKyr2DV19cKVst5UElHX+UlacvzEBPtjkykiwSKb8v326DZx2rbzrdEUzSeRlWqkJg13sM/7nN++j6UEfVXBrF1OblqheOq0DQ+MDq/lRZlf3TltP1q2JRkFNOZysriuElREHv/vC+Yl5cVg4V2CcMl45sSLlLl443H5q8d/RDZHjtLmZ2+BCqyrhjARaZ4bkM8MC9rbZYdl6k3QQMn9nyDi9RELqbbx4qn8pvyzRpdheeVtIt2q2qxZmaRsxprpcjvLkuiKO+Oh4aR+e5bRcmPyojmQXJZpgh0cLGX5qNWP3MRUZaBQ52Iszhmmf1xIcMLPMa82pRSBTssptm/DfbtNkmMQZZq1YIbcMiGM/Cc9vGrkf1rG8+eDsbTw8x3Q== root@proxmox-01'

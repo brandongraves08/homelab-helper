@@ -1,0 +1,133 @@
+---
+# Download openshift-install and generate customized FCOS ISO for single-node OKD
+- name: Prepare single-node OKD installation ISO
+  delegate_to: localhost
+  vars:
+    okd_version: "4.21.0-okd-scos.ec.8"
+    arch: "x86_64"
+    work_dir: "/tmp/okd-sno"
+    proxmox_host: "192.168.2.196"
+    proxmox_user: "{{ proxmox_api_user }}"
+    proxmox_password: "{{ proxmox_api_password }}"
+    iso_dest: "/var/lib/vz/template/iso/okd-sno-{{ okd_version }}.iso"
+  block:
+    - name: Create work directory
+      file:
+        path: "{{ work_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Download openshift-install binary
+      get_url:
+        url: "https://github.com/okd-project/okd/releases/download/{{ okd_version }}/openshift-install-linux-{{ okd_version }}.tar.gz"
+        dest: "{{ work_dir }}/openshift-install.tar.gz"
+        mode: '0644'
+
+    - name: Extract openshift-install
+      unarchive:
+        src: "{{ work_dir }}/openshift-install.tar.gz"
+        dest: "{{ work_dir }}"
+        remote_src: yes
+
+    - name: Make openshift-install executable
+      file:
+        path: "{{ work_dir }}/openshift-install"
+        mode: '0755'
+
+    - name: Get FCOS ISO URL
+      shell: |
+        {{ work_dir }}/openshift-install coreos print-stream-json | jq -r '.architectures.{{ arch }}.artifacts.metal.formats.iso.disk.location'
+      register: fcos_iso_url
+
+    - name: Debug FCOS ISO URL
+      debug:
+        msg: "FCOS ISO URL: {{ fcos_iso_url.stdout }}"
+
+    - name: Download FCOS ISO
+      get_url:
+        url: "{{ fcos_iso_url.stdout }}"
+        dest: "{{ work_dir }}/fcos-live.iso"
+        mode: '0644'
+
+    - name: Generate SSH key if not exists
+      openssh_keypair:
+        path: "{{ work_dir }}/okd_rsa"
+        type: rsa
+        size: 4096
+
+    - name: Create install-config.yaml for single-node
+      copy:
+        content: |
+          apiVersion: v1
+          baseDomain: homelab.local
+          compute:
+          - name: worker
+            replicas: 0
+          controlPlane:
+            name: master
+            replicas: 1
+          metadata:
+            name: okd-sno
+          networking:
+            clusterNetwork:
+            - cidr: 10.128.0.0/14
+              hostPrefix: 23
+            machineNetwork:
+            - cidr: 192.168.2.0/24
+            networkType: OVNKubernetes
+            serviceNetwork:
+            - 172.30.0.0/16
+          platform:
+            none: {}
+          bootstrapInPlace:
+            installationDisk: /dev/sda
+          pullSecret: '{"auths":{"fake":{"auth":"aGVsbG86d29ybGQ="}}}'
+          sshKey: |
+            {{ lookup('file', work_dir + '/okd_rsa.pub') }}
+        dest: "{{ work_dir }}/install-config.yaml"
+
+    - name: Backup install-config.yaml
+      copy:
+        src: "{{ work_dir }}/install-config.yaml"
+        dest: "{{ work_dir }}/install-config.yaml.bak"
+        remote_src: yes
+
+    - name: Create sno directory
+      file:
+        path: "{{ work_dir }}/sno"
+        state: directory
+        mode: '0755'
+
+    - name: Copy install-config.yaml to sno directory
+      copy:
+        src: "{{ work_dir }}/install-config.yaml"
+        dest: "{{ work_dir }}/sno/install-config.yaml"
+        remote_src: yes
+
+    - name: Generate single-node ignition config
+      shell: |
+        {{ work_dir }}/openshift-install --dir={{ work_dir }}/sno create single-node-ignition-config
+      args:
+        creates: "{{ work_dir }}/sno/bootstrap-in-place-for-live-iso.ign"
+      environment:
+        PATH: "{{ work_dir }}:{{ ansible_env.PATH }}"
+
+    - name: Embed ignition into FCOS ISO
+      shell: |
+        podman run --privileged --pull always --rm \
+          -v /dev:/dev -v {{ work_dir }}:/data \
+          -w /data quay.io/coreos/coreos-installer:release \
+          iso ignition embed -fi sno/bootstrap-in-place-for-live-iso.ign fcos-live.iso
+      args:
+        creates: "{{ work_dir }}/okd-sno-custom.iso"
+
+    - name: Rename customized ISO
+      copy:
+        src: "{{ work_dir }}/fcos-live.iso"
+        dest: "{{ work_dir }}/okd-sno-{{ okd_version }}.iso"
+        remote_src: yes
+
+    - name: Upload customized ISO to Proxmox
+      shell: |
+        sshpass -p '{{ proxmox_password }}' scp -o StrictHostKeyChecking=no {{ work_dir }}/okd-sno-{{ okd_version }}.iso root@{{ proxmox_host }}:{{ iso_dest }}
+      when: not ansible_check_mode

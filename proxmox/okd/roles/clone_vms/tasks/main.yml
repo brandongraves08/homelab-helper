@@ -1,0 +1,47 @@
+---
+# Create single-node OKD VM (no cloning needed for SNO)
+- name: Create single-node OKD VM
+  delegate_to: localhost
+  vars:
+    proxmox_host: "192.168.2.196"
+    proxmox_user: "{{ proxmox_api_user }}"
+    proxmox_password: "{{ proxmox_api_password }}"
+    node: "pve"
+    vmid: 9100
+    vm_name: "okd-sno"
+    storage: "local-lvm"
+    bridge: "vmbr0"
+    cores: 8
+    memory: 16384
+    disk_size: "120"
+    okd_version: "4.21.0-okd-scos.ec.8"
+    iso_path: "local:iso/okd-sno-{{ okd_version }}.iso"
+  block:
+    - name: Create single-node OKD VM
+      community.general.proxmox_kvm:
+        api_host: "{{ proxmox_host }}"
+        api_user: "{{ proxmox_user }}"
+        api_password: "{{ proxmox_password }}"
+        node: "{{ node }}"
+        vmid: "{{ vmid }}"
+        name: "{{ vm_name }}"
+        cores: "{{ cores }}"
+        memory: "{{ memory }}"
+        scsi:
+          scsi0: "{{ storage }}:{{ disk_size }},format=raw"
+        net:
+          net0: "virtio,bridge={{ bridge }}"
+        ide:
+          ide2: "{{ iso_path }},media=cdrom"
+        boot: "order=scsi0;ide2"
+        ostype: l26
+        state: present
+
+    - name: Start single-node OKD VM
+      community.general.proxmox_kvm:
+        api_host: "{{ proxmox_host }}"
+        api_user: "{{ proxmox_user }}"
+        api_password: "{{ proxmox_password }}"
+        node: "{{ node }}"
+        vmid: "{{ vmid }}"
+        state: started

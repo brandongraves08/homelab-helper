@@ -1,0 +1,46 @@
+---
+# Create a Proxmox VM template for OKD nodes using the uploaded ISO
+- name: Create OKD template VM
+  delegate_to: localhost
+  vars:
+    proxmox_host: "192.168.2.196"
+    proxmox_user: "{{ proxmox_api_user }}"
+    proxmox_password: "{{ proxmox_api_password }}"
+    template_vmid: 9000
+    template_name: "okd4-template"
+    iso_path: "/var/lib/vz/template/iso/okd-4.14.0-x86_64-live.x86_64.iso"
+    storage: "local-lvm"
+    bridge: "vmbr0"
+  block:
+    - name: Create VM for template
+      community.general.proxmox_kvm:
+        api_host: "{{ proxmox_host }}"
+        api_user: "{{ proxmox_user }}"
+        api_password: "{{ proxmox_password }}"
+        node: "pve"
+        vmid: "{{ template_vmid }}"
+        name: "{{ template_name }}"
+        cores: 2
+        memory: 4096
+        scsihw: virtio-scsi-pci
+        scsi0: "{{ storage }}:32"
+        net0: "virtio,bridge={{ bridge }}"
+        ide2: "{{ storage }}:cloudinit"
+        boot: cd
+        bootdisk: scsi0
+        ostype: l26
+        iso: "local:iso/{{ iso_path | basename }}"
+        onboot: no
+        agent: 1
+        state: present
+      register: template_vm
+
+    - name: Convert VM to template
+      community.general.proxmox_kvm:
+        api_host: "{{ proxmox_host }}"
+        api_user: "{{ proxmox_user }}"
+        api_password: "{{ proxmox_password }}"
+        node: "pve"
+        vmid: "{{ template_vmid }}"
+        state: template
+      when: template_vm.changed

@@ -1,0 +1,19 @@
+---
+# Monitor single-node OKD installation
+- name: Monitor single-node OKD installation
+  delegate_to: localhost
+  vars:
+    work_dir: "/tmp/okd-sno"
+  block:
+    - name: Wait for installation to complete
+      shell: |
+        {{ work_dir }}/openshift-install --dir={{ work_dir }}/sno wait-for install-complete
+      register: okd_install_result
+      ignore_errors: yes
+      async: 3600
+      poll: 30
+
+    - name: Show installation output
+      debug:
+        var: okd_install_result.stdout_lines
+      when: okd_install_result.stdout_lines is defined

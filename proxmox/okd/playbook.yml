@@ -1,0 +1,33 @@
+
+- name: Single-node OKD deployment on Proxmox
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  vars_files:
+    - vault.yml
+  tasks:
+    - name: Validate vault variables are present
+      assert:
+        that:
+          - proxmox_api_user is defined
+          - proxmox_api_password is defined
+
+    - name: Prepare single-node OKD ISO (download tools, generate ignition, embed)
+      import_role:
+        name: upload_image
+
+    - name: Create single-node OKD VM
+      import_role:
+        name: clone_vms
+
+    - name: Monitor OKD installation progress
+      import_role:
+        name: okd_install
+
+    - name: Run OKD cluster health checks
+      import_role:
+        name: okd_health
+
+    - name: Export kubeconfig and write install summary
+      import_role:
+        name: okd_report

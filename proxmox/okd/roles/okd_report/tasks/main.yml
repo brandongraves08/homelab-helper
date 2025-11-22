@@ -1,0 +1,36 @@
+---
+# Export kubeconfig and write a summary report
+- name: Copy kubeconfig to user home
+  delegate_to: localhost
+  vars:
+    work_dir: "/tmp/okd-sno"
+  ansible.builtin.copy:
+    src: "{{ work_dir }}/sno/auth/kubeconfig"
+    dest: "~/.kube/okd-kubeconfig"
+    mode: '0600'
+  ignore_errors: yes
+
+- name: Write OKD install summary
+  delegate_to: localhost
+  ansible.builtin.copy:
+    dest: "{{ playbook_dir }}/okd_install_summary.txt"
+    content: |
+      Single-Node OKD Install Summary
+      ===============================
+      Date: {{ ansible_date_time.date }} {{ ansible_date_time.time }}
+      Cluster: okd-sno
+      Kubeconfig: ~/.kube/okd-kubeconfig
+      Work directory: /tmp/okd-sno
+      
+      To access the cluster:
+        export KUBECONFIG=~/.kube/okd-kubeconfig
+        oc get nodes
+        oc get clusterversion
+        oc get pods --all-namespaces
+      
+      For web console:
+        oc whoami --show-console
+      
+      Admin credentials:
+        cat /tmp/okd-sno/sno/auth/kubeadmin-password
+    mode: '0644'

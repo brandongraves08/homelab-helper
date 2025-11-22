@@ -1,0 +1,58 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config
+data:
+  # Assisted Service Configuration
+  # Network: 192.168.2.0/24 (thelab.lan)
+  # Bastion IP: 192.168.2.205 (runs assisted-service)
+  # Proxmox IP: 192.168.2.196
+  # Target OKD Node: 192.168.2.50
+  ASSISTED_SERVICE_HOST: 192.168.2.205:8090
+  ASSISTED_SERVICE_SCHEME: http
+  AUTH_TYPE: none
+  
+  # Database Configuration
+  DB_HOST: 127.0.0.1
+  DB_NAME: installer
+  DB_PASS: admin
+  DB_PORT: "5432"
+  DB_USER: admin
+  DEPLOY_TARGET: onprem
+  
+  # Feature Flags
+  DISK_ENCRYPTION_SUPPORT: "false"
+  DUMMY_IGNITION: "false"
+  ENABLE_SINGLE_NODE_DNSMASQ: "true"
+  ENABLE_OKD_SUPPORT: "true"
+  ENABLE_UPGRADE_AGENT: "false"
+  
+  # Hardware Requirements (adjusted for home lab)
+  HW_VALIDATOR_REQUIREMENTS: '[{"version":"default","master":{"cpu_cores":4,"ram_mib":16384,"disk_size_gb":100,"installation_disk_speed_threshold_ms":10,"network_latency_threshold_ms":100,"packet_loss_percentage":0},"worker":{"cpu_cores":2,"ram_mib":8192,"disk_size_gb":100,"installation_disk_speed_threshold_ms":10,"network_latency_threshold_ms":1000,"packet_loss_percentage":10},"sno":{"cpu_cores":8,"ram_mib":16384,"disk_size_gb":100,"installation_disk_speed_threshold_ms":10}},{"version":"4.20.0-okd-scos.9","master":{"cpu_cores":4,"ram_mib":16384,"disk_size_gb":100,"installation_disk_speed_threshold_ms":10,"network_latency_threshold_ms":100,"packet_loss_percentage":0},"worker":{"cpu_cores":2,"ram_mib":8192,"disk_size_gb":100,"installation_disk_speed_threshold_ms":10,"network_latency_threshold_ms":1000,"packet_loss_percentage":10},"sno":{"cpu_cores":8,"ram_mib":16384,"disk_size_gb":100,"installation_disk_speed_threshold_ms":10}}]'
+  
+  # Service URLs (bastion-hosted)
+  IMAGE_SERVICE_BASE_URL: http://192.168.2.205:8888
+  SERVICE_BASE_URL: http://192.168.2.205:8090
+  
+  # Network Configuration
+  IPV6_SUPPORT: "true"
+  LISTEN_PORT: "8888"
+  NTP_DEFAULT_SERVER: ""
+  
+  # PostgreSQL Configuration
+  POSTGRESQL_DATABASE: installer
+  POSTGRESQL_PASSWORD: admin
+  POSTGRESQL_USER: admin
+  
+  # Registry Configuration
+  PUBLIC_CONTAINER_REGISTRIES: 'quay.io,registry.ci.openshift.org'
+  
+  # Storage
+  STORAGE: filesystem
+  ISO_IMAGE_TYPE: "full-iso"
+  
+  # OKD-specific: Fedora CoreOS Images
+  OS_IMAGES: '[{"openshift_version":"4.20","cpu_architecture":"x86_64","url":"https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/43.20251024.3.0/x86_64/fedora-coreos-43.20251024.3.0-live-iso.x86_64.iso","version":"43.20251024.3.0"}]'
+  
+  # OKD Release Images
+  RELEASE_IMAGES: '[{"openshift_version":"4.20","cpu_architecture":"x86_64","cpu_architectures":["x86_64"],"url":"quay.io/okd/scos-release:4.20.0-okd-scos.9","version":"4.20.0-okd-scos.9","default":true,"support_level":"production"}]'

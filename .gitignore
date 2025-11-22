@@ -1,0 +1,10 @@
+# Ignore local vaults and sensitive files
+proxmox/okd/vault.yml
+.vault_pass.txt
+*.iso
+*.tar.gz
+proxmox/okd/installer/oc
+proxmox/okd/installer/kubectl
+proxmox/okd/installer/openshift-install
+proxmox/okd/okd-sno-install/.openshift_install*
+proxmox/okd/okd-sno-install/auth/

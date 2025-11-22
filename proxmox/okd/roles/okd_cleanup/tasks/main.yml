@@ -1,0 +1,30 @@
+---
+# Cleanup role: delete OKD VMs, template, and ISO from Proxmox
+- name: Delete OKD master and worker VMs
+  delegate_to: localhost
+  community.general.proxmox_kvm:
+    api_host: "{{ proxmox_host }}"
+    api_user: "{{ proxmox_api_user }}"
+    api_password: "{{ proxmox_api_password }}"
+    node: "pve"
+    vmid: "{{ item }}"
+    state: absent
+  loop: "{{ query('sequence', 'start=' + (vmid_start | string) + ' end=' + ((vmid_start + master_count + worker_count - 1) | string)) }}"
+  ignore_errors: yes
+
+- name: Delete OKD template VM
+  delegate_to: localhost
+  community.general.proxmox_kvm:
+    api_host: "{{ proxmox_host }}"
+    api_user: "{{ proxmox_api_user }}"
+    api_password: "{{ proxmox_api_password }}"
+    node: "pve"
+    vmid: "{{ template_vmid }}"
+    state: absent
+  ignore_errors: yes
+
+- name: Remove OKD ISO from Proxmox storage
+  delegate_to: localhost
+  ansible.builtin.shell: |
+    ssh -o StrictHostKeyChecking=no root@{{ proxmox_host }} rm -f /var/lib/vz/template/iso/{{ okd_iso_name }}
+  ignore_errors: yes

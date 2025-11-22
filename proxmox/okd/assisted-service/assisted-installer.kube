@@ -1,0 +1,15 @@
+[Unit]
+Description=OKD Assisted Installer Service
+Wants=network-online.target
+After=network-online.target
+
+[Kube]
+Yaml=/home/brandon/okd-assisted-service/pod.yml
+ConfigMap=/home/brandon/okd-assisted-service/okd-configmap.yml
+
+[Service]
+Restart=always
+TimeoutStartSec=900
+
+[Install]
+WantedBy=default.target

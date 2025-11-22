@@ -1,0 +1,35 @@
+---
+# OKD cluster health checks after install
+- name: Check if oc CLI is available
+  delegate_to: localhost
+  ansible.builtin.command: which oc
+  register: oc_check
+  failed_when: oc_check.rc != 0
+
+- name: Wait for OKD API to be available
+  delegate_to: localhost
+  ansible.builtin.command: oc get --raw /healthz
+  register: api_health
+  retries: 30
+  delay: 20
+  until: api_health.rc == 0
+
+- name: Get node status
+  delegate_to: localhost
+  ansible.builtin.command: oc get nodes
+  register: node_status
+  failed_when: node_status.rc != 0
+
+- name: Get pod status in all namespaces
+  delegate_to: localhost
+  ansible.builtin.command: oc get pods --all-namespaces
+  register: pod_status
+  failed_when: pod_status.rc != 0
+
+- name: Show node status
+  debug:
+    var: node_status.stdout_lines
+
+- name: Show pod status
+  debug:
+    var: pod_status.stdout_lines

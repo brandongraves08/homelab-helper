@@ -1,0 +1,52 @@
+---
+# Generate and distribute OKD ignition configs
+- name: Ensure openshift-install is available
+  delegate_to: localhost
+  ansible.builtin.command: which openshift-install
+  register: openshift_install_check
+  failed_when: openshift_install_check.rc != 0
+
+- name: Generate install-config.yaml if not present
+  delegate_to: localhost
+  ansible.builtin.copy:
+    dest: install-config.yaml
+    content: |
+      apiVersion: v1
+      baseDomain: example.com
+      metadata:
+        name: okd
+      compute:
+      - name: worker
+        replicas: 3
+      controlPlane:
+        name: master
+        replicas: 3
+      networking:
+        networkType: OVNKubernetes
+        clusterNetwork:
+        - cidr: 10.128.0.0/14
+          hostPrefix: 23
+        serviceNetwork:
+        - 172.30.0.0/16
+      platform:
+        none: {}
+      fips: false
+      pullSecret: '{}'
+      sshKey: 'ssh-rsa AAAA...generated_or_user_key...'
+  when: not lookup('ansible.builtin.file', 'install-config.yaml', errors='ignore')
+
+- name: Run openshift-install create ignition-configs
+  delegate_to: localhost
+  ansible.builtin.command: openshift-install create ignition-configs --dir .
+  args:
+    chdir: "{{ playbook_dir }}"
+  register: ignition_result
+  changed_when: ignition_result.rc == 0
+
+- name: Copy ignition files to Proxmox host
+  delegate_to: localhost
+  ansible.builtin.shell: |
+    scp -o StrictHostKeyChecking=no *.ign root@{{ proxmox_host }}:/var/lib/vz/template/iso/
+  environment:
+    SSHPASS: "{{ proxmox_password }}"
+  ignore_errors: yes
