@@ -1,0 +1,206 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dashboard
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dashy-config
+  namespace: dashboard
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dashy-config
+  namespace: dashboard
+data:
+  conf.yml: |
+    pageInfo:
+      title: Homelab Dashboard
+      description: Central dashboard for all homelab services
+      navLinks:
+        - title: GitHub
+          path: https://github.com/brandongraves08/homelab-helper
+      logo: https://i.ibb.co/qWWpD0v/astro-dab-128.png
+    appConfig:
+      theme: nord-frost
+      layout: auto
+      iconSize: medium
+      language: en
+      statusCheck: true
+      statusCheckInterval: 60
+      faviconApi: allesedv
+      routingMode: history
+      enableMultiTasking: true
+    sections:
+      - name: Infrastructure
+        icon: fas fa-server
+        items:
+          - title: Proxmox VE
+            description: Virtualization platform
+            url: https://192.168.2.196:8006
+            icon: hl-proxmox
+            statusCheck: true
+          - title: UniFi Controller
+            description: Network management
+            url: https://192.168.2.1
+            icon: hl-ubiquiti
+            statusCheck: true
+          - title: Synology NAS
+            description: Storage server
+            url: https://192.168.2.220:5001
+            icon: hl-synology
+            statusCheck: true
+      - name: Kubernetes
+        icon: fab fa-kubernetes
+        items:
+          - title: K3s Dashboard
+            description: Kubernetes dashboard
+            url: https://dashboard.k3s.thelab.lan:30443
+            icon: hl-kubernetes-dashboard
+            statusCheck: true
+          - title: Traefik Dashboard
+            description: Ingress controller
+            url: https://traefik.thelab.lan
+            icon: hl-traefik
+            statusCheck: true
+      - name: Monitoring
+        icon: fas fa-chart-line
+        items:
+          - title: Grafana
+            description: Metrics visualization
+            url: https://grafana.thelab.lan
+            icon: hl-grafana
+            statusCheck: true
+          - title: Prometheus
+            description: Metrics collection
+            url: https://prometheus.thelab.lan
+            icon: hl-prometheus
+            statusCheck: true
+          - title: Loki
+            description: Log aggregation
+            url: https://loki.thelab.lan
+            icon: hl-loki
+            statusCheck: true
+      - name: Security & Authentication
+        icon: fas fa-shield-alt
+        items:
+          - title: Authentik
+            description: SSO identity provider
+            url: https://authentik.thelab.lan
+            icon: hl-authentik
+            statusCheck: true
+          - title: Vault
+            description: Secret management
+            url: https://vault.thelab.lan
+            icon: hl-vault
+            statusCheck: true
+      - name: Container Registry
+        icon: fas fa-box
+        items:
+          - title: Harbor
+            description: Container registry
+            url: https://harbor.thelab.lan
+            icon: hl-harbor
+            statusCheck: true
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dashy
+  namespace: dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dashy
+  template:
+    metadata:
+      labels:
+        app: dashy
+    spec:
+      containers:
+      - name: dashy
+        image: lissy93/dashy:latest
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: NODE_ENV
+          value: production
+        volumeMounts:
+        - name: config
+          mountPath: /app/user-data/conf.yml
+          subPath: conf.yml
+          readOnly: true
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "200m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+      volumes:
+      - name: config
+        configMap:
+          name: dashy-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dashy
+  namespace: dashboard
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 8080
+    protocol: TCP
+    name: http
+  selector:
+    app: dashy
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dashy
+  namespace: dashboard
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  ingressClassName: traefik
+  rules:
+  - host: dashboard.thelab.lan
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: dashy
+            port:
+              number: 80
+  tls:
+  - hosts:
+    - dashboard.thelab.lan
+    secretName: dashboard-tls

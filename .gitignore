@@ -8,3 +8,8 @@ proxmox/okd/installer/kubectl
 proxmox/okd/installer/openshift-install
 proxmox/okd/okd-sno-install/.openshift_install*
 proxmox/okd/okd-sno-install/auth/
+
+# Sensitive credentials
+.unifi_api_key
+.authentik-api-token
+.unifi_credentials
