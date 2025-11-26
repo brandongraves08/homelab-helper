@@ -70,6 +70,18 @@ To update the dashboard configuration:
 
 ## Troubleshooting
 
+### Pod Restarts / Long Startup Times
+
+**Issue**: Dashy's default entrypoint runs `yarn build` on every startup which takes 60-120 seconds and causes pod restarts.
+
+**Solution**: The deployment uses `command: ["node", "server"]` to skip the build process and start the server immediately.
+
+**Required Probe Timings**:
+- Liveness Probe: `initialDelaySeconds: 120` (allows time for server startup)
+- Readiness Probe: `initialDelaySeconds: 60` (allows time for server to be ready)
+
+### Common Commands
+
 ```bash
 # Check pod logs
 ssh centos@192.168.2.250 'sudo /usr/local/bin/k3s kubectl logs -n dashboard deployment/dashy'
@@ -84,6 +96,13 @@ ssh centos@192.168.2.250 'sudo /usr/local/bin/k3s kubectl rollout restart deploy
 ssh centos@192.168.2.250 'sudo /usr/local/bin/k3s kubectl delete -f /tmp/dashy-deployment.yml'
 ssh centos@192.168.2.250 'sudo /usr/local/bin/k3s kubectl apply -f /tmp/dashy-deployment.yml'
 ```
+
+### DNS Issues
+
+If `dashboard.thelab.lan` doesn't resolve, verify the UniFi DNS record is enabled:
+- API endpoint: `https://192.168.2.1/proxy/network/v2/api/site/default/static-dns`
+- Required field: `"enabled": true`
+- See `proxmox/k3s/UNIFI_DNS_AUTOMATION.md` for automation details
 
 ## Adding New Services
 
