@@ -25,6 +25,11 @@ As an AI coding agent, you must continuously learn from interactions and improve
 - **Track Dependencies**: Document required packages, tools, and configurations needed for each workflow
 - **Version Compatibility**: Track which versions of software work together and document any version-specific requirements
 
+**Learned Solutions:**
+- **Dashy Dashboard**: Default entrypoint runs `yarn build` on every startup (60-120s), causing pod restarts. Solution: Override with `command: ["node", "server"]` to skip build. Requires increased probes: 120s liveness, 60s readiness.
+- **UniFi DNS**: Records MUST have `"enabled": true` field set via API or they won't resolve. API endpoint: `https://192.168.2.1/proxy/network/v2/api/site/default/static-dns` with X-API-KEY header.
+- **Grafana SSO**: generic_oauth provider has hardcoded /emails endpoint bug. azuread provider requires JWKS validation. Consider using Authentik proxy provider instead of OAuth for SSO.
+
 The goal is to become more autonomous and accurate over time, requiring less correction from the user.
 
 ## Architecture & Patterns
