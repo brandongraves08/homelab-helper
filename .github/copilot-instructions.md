@@ -24,6 +24,7 @@ As an AI coding agent, you must continuously learn from interactions and improve
 - **Improve Automation**: Each time you perform a manual step, consider how to automate it next time and implement that automation
 - **Track Dependencies**: Document required packages, tools, and configurations needed for each workflow
 - **Version Compatibility**: Track which versions of software work together and document any version-specific requirements
+- **Use Documentation Tools**: When uncertain about APIs, configurations, or best practices, use Context7 MCP tools (`mcp_context7_resolve-library-id` and `mcp_context7_get-library-docs`) or Microsoft Docs tools (`mcp_microsoftdocs_microsoft_docs_search`) to fetch official documentation. This ensures accurate, up-to-date information instead of guessing or using outdated knowledge
 
 **Learned Solutions:**
 - **Dashy Dashboard**: Default entrypoint runs `yarn build` on every startup (60-120s), causing pod restarts. Solution: Override with `command: ["node", "server"]` to skip build. Requires increased probes: 120s liveness, 60s readiness.
