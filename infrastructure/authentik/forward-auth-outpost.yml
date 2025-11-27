@@ -1,0 +1,114 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: authentik-outpost-token
+  namespace: authentik
+type: Opaque
+stringData:
+  token: BsKcBDBNsTtzLm7BoIwDnN2WqgG1YYuiMndFWcxtCv1dqltyUjFR0tEJgjrS
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: authentik-proxy-forward-auth
+  namespace: authentik
+  labels:
+    app.kubernetes.io/name: authentik-proxy
+    app.kubernetes.io/instance: forward-auth
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: authentik-proxy
+      app.kubernetes.io/instance: forward-auth
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: authentik-proxy
+        app.kubernetes.io/instance: forward-auth
+    spec:
+      containers:
+      - name: proxy
+        image: ghcr.io/goauthentik/proxy:2024.10.3
+        ports:
+        - containerPort: 9000
+          name: http
+          protocol: TCP
+        - containerPort: 9300
+          name: http-metrics
+          protocol: TCP
+        env:
+        - name: AUTHENTIK_HOST
+          value: "https://authentik.thelab.lan"
+        - name: AUTHENTIK_INSECURE
+          value: "true"
+        - name: AUTHENTIK_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: authentik-outpost-token
+              key: token
+        livenessProbe:
+          httpGet:
+            path: /outpost.goauthentik.io/ping
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /outpost.goauthentik.io/ping
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: authentik-proxy-forward-auth
+  namespace: authentik
+spec:
+  type: ClusterIP
+  ports:
+  - port: 9000
+    targetPort: 9000
+    protocol: TCP
+    name: http
+  - port: 9300
+    targetPort: 9300
+    protocol: TCP
+    name: metrics
+  selector:
+    app.kubernetes.io/name: authentik-proxy
+    app.kubernetes.io/instance: forward-auth
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: authentik-forward-auth
+  namespace: authentik
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  ingressClassName: traefik
+  rules:
+  - host: auth.thelab.lan
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: authentik-proxy-forward-auth
+            port:
+              number: 9000
+  tls:
+  - hosts:
+    - auth.thelab.lan
+    secretName: auth-tls

@@ -1,0 +1,63 @@
+# Prometheus Stack Configuration
+prometheus:
+  prometheusSpec:
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: nfs-client
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 50Gi
+    retention: 30d
+    resources:
+      requests:
+        cpu: 500m
+        memory: 2Gi
+      limits:
+        cpu: 1000m
+        memory: 4Gi
+
+grafana:
+  enabled: true
+  adminPassword: admin  # Change this!
+  persistence:
+    enabled: true
+    storageClassName: nfs-client
+    size: 10Gi
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    hosts:
+      - grafana.thelab.lan
+    annotations:
+      cert-manager.io/cluster-issuer: "selfsigned-issuer"
+    tls:
+      - secretName: grafana-tls
+        hosts:
+          - grafana.thelab.lan
+
+alertmanager:
+  alertmanagerSpec:
+    storage:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: nfs-client
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 10Gi
+
+# Enable metrics from common services
+kubeApiServer:
+  enabled: true
+kubeControllerManager:
+  enabled: true
+kubeScheduler:
+  enabled: true
+kubeProxy:
+  enabled: true
+kubeEtcd:
+  enabled: true
+coreDns:
+  enabled: true
