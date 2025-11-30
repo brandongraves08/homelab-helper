@@ -1,4 +1,32 @@
+# Shared Grafana OAuth configuration for Authentik.
+#
+# The top-level keys are consumed by the standalone grafana/grafana chart.
+# The nested `grafana:` block mirrors the same settings for kube-prometheus-stack,
+# which expects Grafana values under the `grafana` key. This duplication keeps
+# Authentik SSO working regardless of which chart is used.
+
+envFromSecret: grafana-oauth-secret
+
+grafana.ini:
+  server:
+    root_url: https://grafana.thelab.lan
+  auth.generic_oauth:
+    enabled: true
+    name: Authentik
+    client_id: grafana
+    client_secret: "${GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET}"
+    scopes: openid profile email
+    auth_url: https://authentik.thelab.lan/application/o/authorize/
+    token_url: https://authentik.thelab.lan/application/o/token/
+    api_url: https://authentik.thelab.lan/application/o/userinfo/
+    allow_sign_up: true
+    auto_login: false
+    role_attribute_path: contains(groups, 'Grafana Admins') && 'Admin' || contains(groups, 'Grafana Editors') && 'Editor' || 'Viewer'
+    tls_skip_verify_insecure: true
+
+# kube-prometheus-stack uses the `grafana` key for all Grafana settings.
 grafana:
+  envFromSecret: grafana-oauth-secret
   grafana.ini:
     server:
       root_url: https://grafana.thelab.lan
@@ -6,7 +34,7 @@ grafana:
       enabled: true
       name: Authentik
       client_id: grafana
-      client_secret: NkvQQRmd0SDXwg3ZeoBOPQkejWoNgjxOsUvVoTUYvn7NQhDMSGlboQpzgUCj32lCHJBseLFS58h1sQx6iVoYyFTgG2IIvGo3Url3m64z5yS1cTwWNi6VC9yflO5YEqZ3
+      client_secret: "${GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET}"
       scopes: openid profile email
       auth_url: https://authentik.thelab.lan/application/o/authorize/
       token_url: https://authentik.thelab.lan/application/o/token/
