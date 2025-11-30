@@ -6,6 +6,8 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 PROXMOX_HOST="192.168.2.196"
 CLOUD_IMAGE="/var/lib/vz/template/qcow/CentOS-Stream-GenericCloud-9-latest.x86_64.qcow2"
 
@@ -160,5 +162,5 @@ echo "Installing K3s Cluster..."
 echo "================================================================"
 echo ""
 
-cd /home/brandon/projects/homelab-helper/proxmox/k3s
+cd "$SCRIPT_DIR"
 ./install-k3s.sh
