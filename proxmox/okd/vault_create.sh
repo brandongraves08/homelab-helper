@@ -22,8 +22,11 @@ printf "%s" "$VAULT_PASS" > "$TMP_PASS_FILE"
 echo "Encrypting proxmox credentials into $VAULT_FILE"
 
 # Replace the values below with the correct username/password if different.
-PROXMOX_USER_RAW="root@pam"
-PROXMOX_PASS_RAW="1LabTime!"
+# IMPORTANT: Use your actual credentials, not hardcoded examples
+read -sp "Enter Proxmox username (e.g., root@pam): " PROXMOX_USER_RAW
+echo
+read -sp "Enter Proxmox password: " PROXMOX_PASS_RAW
+echo
 
 USER_ENC=$(ansible-vault encrypt_string "$PROXMOX_USER_RAW" --name 'proxmox_api_user' --vault-password-file "$TMP_PASS_FILE")
 PW_ENC=$(ansible-vault encrypt_string "$PROXMOX_PASS_RAW" --name 'proxmox_api_password' --vault-password-file "$TMP_PASS_FILE")

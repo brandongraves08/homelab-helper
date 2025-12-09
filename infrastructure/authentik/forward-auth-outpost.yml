@@ -5,7 +5,10 @@ metadata:
   namespace: authentik
 type: Opaque
 stringData:
-  token: BsKcBDBNsTtzLm7BoIwDnN2WqgG1YYuiMndFWcxtCv1dqltyUjFR0tEJgjrS
+  # IMPORTANT: Replace with actual Authentik outpost token from:
+  # 1. Authentik UI → Applications → Outposts
+  # 2. Create new outpost, copy token and replace placeholder below
+  token: "REPLACE_WITH_ACTUAL_AUTHENTIK_OUTPOST_TOKEN"
 ---
 apiVersion: apps/v1
 kind: Deployment

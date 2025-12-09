@@ -20,7 +20,10 @@ prometheus:
 
 grafana:
   enabled: true
-  adminPassword: admin  # Change this!
+  # IMPORTANT: Set via Kubernetes secret in production, not plaintext
+  # For initial setup only:
+  adminPassword: CHANGE_ME_IN_PRODUCTION
+  # Recommended: kubectl create secret generic grafana-admin --from-literal=password=$(openssl rand -base64 32) -n monitoring
   persistence:
     enabled: true
     storageClassName: nfs-client
